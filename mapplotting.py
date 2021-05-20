@@ -3,6 +3,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 import re
 import json
+import pydeck
 stuff = "https://kiosks.bicycletransit.workers.dev/phl"
 req = Request(stuff, headers={'User-Agent': 'Mozilla/5.0'})
 trip_data = pd.read_csv("indego-trips-2021-q1.csv")
@@ -28,12 +29,12 @@ for i in range (145):
     endindx = name_part.find(",\"coordinates\"")
     stationName = name_part[startindx:endindx]
     stationNamecon = stationName[7:-1]
-    print(stationNamecon)
+    #print(stationNamecon)
     name_avaible[stationNamecon] = bikes_available
-print(name_avaible)
+#print(name_avaible)
 
 ##very ineffecent way of getting coordinates from website
-# while(webpage.find("-75.") != -1):
+# while(webpage.find("-75.") != -1):    
 #     for i in range(2):
 #         startinx = webpage.find("-75.")
 #         if webpage[startinx + 9] == "3" or webpage[startinx + 9] ==  "9":
@@ -75,9 +76,10 @@ else:
     lon.append(float(lon1.iloc[0]))
     lat.append(float(lat1.iloc[0]))
     coordinates = list(zip(lat, lon))
-    map_data=pd.DataFrame(
+    single_point =pd.DataFrame(
         coordinates,
         columns = ['lat', 'lon']
         )
-    st.map(map_data)
+    st.map(single_point)
     st.write("There are currently" , name_avaible[selected_answer] , "bikes available at this location")
+#have all dots plotted then plot blue dot
