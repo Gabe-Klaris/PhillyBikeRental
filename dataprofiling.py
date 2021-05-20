@@ -68,19 +68,23 @@ st.write(average_trips_end)
 #     x_axis_label = "Day",
 #     y_axis_label= "Bikes Taken out"
 # )
-if  int(end_date) < int(start_date):
-    st.write("Select new end date//can't be before start date")
-else:
+start = dates["Dates"].str.index(start_date)
+if  end_date_month >= start_date_month and end_date_day >= start_date_day:
     dates_list = []
-    for i in range (0, len(average_trips_start)):
+    #start at index of start_date end at len of list
+    for i in range (start_date , len(average_trips_start)):
         dates_list.append(dates.loc[i, "Dates"])
     fig = plt.figure()
     ax = plt.axes()
     x_values = np.arange(1, len(average_trips_start) + 1, 1)
-    st.write(dates_list)
     plt.xticks(x_values, dates_list)
     plt.xlabel("Days")
+    plt.plot(average_trips_start)
     st.pyplot(fig)
+    #need to create graph for trips ended
+    #might need to fix line starting at wrong point?
+else:
+    st.write("Select new end date//can't be before start date")
 # start_time = 1800
 # end_time = 1830
 # for i in start_times:
