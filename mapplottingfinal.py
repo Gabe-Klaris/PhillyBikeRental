@@ -20,8 +20,8 @@ trip_data_2019_4 = pd.read_csv("indego-trips-2019-q4.csv")
 trip_data = pd.read_csv("indego-trips-2020-q1.csv")
 station_data = pd.read_csv("indego-stations-2021-01-01.csv")
 dates = pd.read_csv("Dates.csv")
-full_data = trip_data.set_index("start_station").join(station_data.set_index("Station_ID"))
-full_data_end = trip_data.set_index("end_station").join(station_data.set_index("Station_ID"))
+full_data = trip_data_2021_1.set_index("start_station").join(station_data.set_index("Station_ID"))
+full_data_end = trip_data_2021_1.set_index("end_station").join(station_data.set_index("Station_ID"))
 web_byte = urlopen(req).read()
 webpage = web_byte.decode('utf-8')
 #streamlit sidebar markdown + prompts to show data for
@@ -52,10 +52,10 @@ for i in range (145):
     name_avaible[stationNamecon] = bikes_available
 trip_data.dropna(0, inplace=True)
 #list of all stations lat + lon
-for i in trip_data["start_lat"]:
+for i in trip_data_2021_1["start_lat"]:
     if i not in latitude:
         latitude.append(float(i))
-for i in trip_data["start_lon"]:
+for i in trip_data_2021_1["start_lon"]:
     if i not in longitude:
         longitude.append(float(i))
 latitude.pop(0)
