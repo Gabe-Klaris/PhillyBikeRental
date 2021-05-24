@@ -28,7 +28,7 @@ web_byte = urlopen(req).read()
 webpage = web_byte.decode('utf-8')
 dates_2020_Q2 = pd.date_range(start="2020/04/01", end="2020/06/30", freq="D")
 dates_2019_Q2 = pd.date_range(start="2019/04/01", end="2019/06/30",freq="D")
-times_before = pd.date_range(start="1/1/2020",periods=48,freq="0h30min")
+times_before = pd.date_range(start="1/1/2020",periods=49,freq="0h30min")
 times = []
 for i in times_before:
     timeStr = i.strftime("%H:%M")
@@ -102,9 +102,9 @@ for i in end_times:
         parts_list1 = trips_list[0].split("-")
         if (int(parts_list1[1]) == int(date_2019_month)) and (int(parts_list1[2]) == int(date_2019_day)):
             day_trip_end_2019.append(trips_list[1])
-halfhour_2020_netchange = []
-halfhour_2019_netchange = []
-for i in range (0,47):
+halfhour_2020_netchange = [0]
+halfhour_2019_netchange = [0]
+for i in range (0,48):
     start_time = int(times[i].replace(":",""))
     end_time = int(times[i+1].replace(":",""))
     trip_2020_start_counter = 0
@@ -131,25 +131,32 @@ for i in range (0,47):
             trip_2019_end_counter += 1
     halfhour_2020_netchange.append(trip_2020_end_counter- trip_2020_start_counter)
     halfhour_2019_netchange.append(trip_2019_end_counter- trip_2019_start_counter)
+times_ticks = []
+for i in range(0,48):
+    times_ticks.append(times[i] + "-" + times[i+1])
 fig = plt.figure()
 ax = plt.axes()
-x_values = np.arange(1, len(times) + 1, 1)
-plt.xticks(x_values, times)
+x_values = np.arange(1, len(times_ticks) +1, 1)
+plt.xticks(x_values, times_ticks)
 ax.tick_params(axis='x', rotation=70, labelsize=3)
 plt.xlabel("Time")
+plt.ylabel("Net change in bikes per half hour")
 plt.title("Trips in 2020")
 plt.plot(halfhour_2020_netchange)
 st.pyplot(fig)
 #create graph for trips ended
 fig1 = plt.figure()
 ax1 = plt.axes()
-plt.xticks(x_values, times)
+plt.xticks(x_values, times_ticks)
 plt.title("Trips in 2019")
-plt.xlabel("Days")
+plt.xlabel("Time")
+plt.ylabel("Net change in bikes per half hour")
 ax1.tick_params(axis='x', rotation=70, labelsize=3)
 plt.plot(halfhour_2019_netchange)
 st.pyplot(fig1)
         
+#clean up and combine with other
 
 
-
+#what is an api call??
+#tf is this>
