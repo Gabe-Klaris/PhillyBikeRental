@@ -18,6 +18,7 @@ lon = []
 longitude = []
 latitude = []
 name_avaible = {}
+docks = []
 better_webpage = webpage.split("\"type\":\"Feature\"},")
 for i in range (145):
     single_part = better_webpage[i]
@@ -26,15 +27,30 @@ for i in range (145):
     for f in single_part:
         if f == "\"isAvailable\":true":
             bikes_available += 1
+    #finding name
     name_part = better_webpage[i]
     startindx = name_part.find("name")
     endindx = name_part.find(",\"coordinates\"")
     stationName = name_part[startindx:endindx]
     stationNamecon = stationName[7:-1]
+    #docks available
+    startindx1 = name_part.find("\"docksAvailable\"")
+    endindx1 = name_part.find("\"bikesAvailable\":")
+    docks_avalable = name_part[startindx1:endindx1]
+    docks_avalablecon = int(docks_avalable[17:-1])
+    #classic bikes
+    startindx2 = name_part.find("classicBikesAvailable")
+    endindx2 = name_part.find("\"smartBikesAvailable\":")
+    classic_bikes_avalable = name_part[startindx2:endindx2]
+    classic_bikes_avalablecon = int(classic_bikes_avalable[23:-1])
+    #electric bikes
+    startindx3 = name_part.find("electricBikesAvailable")
+    endindx3 = name_part.find("\"rewardBikesAvailable\":")
+    electric_bikes_avalable = name_part[startindx3:endindx3]
+    electric_bikes_avalablecon = int(electric_bikes_avalable[24:-1])
     #print(stationNamecon)
-    name_avaible[stationNamecon] = bikes_available
+    name_avaible[stationNamecon] = bikes_available, docks_avalablecon, classic_bikes_avalablecon,electric_bikes_avalablecon
 #print(name_avaible)
-
 ##very ineffecent way of getting coordinates from website
 # while(webpage.find("-75.") != -1):    
 #     for i in range(2):
@@ -71,49 +87,49 @@ for i in range (145):
 st.sidebar.markdown("# Pick a location and it will show the bikes available and location")
 selected_answer = st.sidebar.selectbox("# Pick a location", station_data["Station_Name"])
 names = []
-data = []
+bikes_amount = []
+docks = []
+classic = []
+electric = []
 for i in stations[1:]:
     bruh = list(full_data[full_data["Station_Name"] == i].index)
     bruh1 = list(trip_data.loc[trip_data.start_station == bruh[0], "start_lat"])
     bruh2 = bruh1[0]
     latitude.append(bruh2)
     names.append(i)
-    data.append("yello")
+    if i == "Broad & Passyunk" or i == "11th & Market":
+        bikes_amount.append(name_avaible[i + " "][0])
+        docks.append(name_avaible[i + " "][1])
+        classic.append(name_avaible[i + " "][2])
+        electric.append(name_avaible[i + " "][3])
+    else:
+        bikes_amount.append(name_avaible[i][0])
+        docks.append(name_avaible[i][1])
+        classic.append(name_avaible[i][2])
+        electric.append(name_avaible[i][3])
 for i in stations[1:]:
     bruh = list(full_data[full_data["Station_Name"] == i].index)
     bruh1 = list(trip_data.loc[trip_data.start_station == bruh[0], "start_lon"])
     bruh2 = bruh1[0]
     longitude.append(bruh2)
-stations_coords = list(zip(latitude, longitude,names))
+stations_coords = list(zip(latitude, longitude,names,bikes_amount,docks,classic,electric))
 all_points = pd.DataFrame(
     stations_coords,
-    columns=['lat', 'lon','station_name']
+    columns=['lat', 'lon','station_name','Bikes Available','Docks Available','Classic Bikes Available', 'Electric Bikes Available']
 )
-if selected_answer == "Virtual Station":
-    st.write("No data here: only for drop offs")
-else:
-    lat1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lat"]
-    lon1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lon"]
-    lon.append(float(lon1.iloc[0]))
-    lat.append(float(lat1.iloc[0]))
-    coordinates = list(zip(lat, lon))
-    single_point =pd.DataFrame(
-        coordinates,
-        columns = ['lat', 'lon']
-        )
-    fig = px.scatter_mapbox(all_points, lat="lat", lon="lon", hover_name="station_name", color_discrete_sequence=["fuchsia"], zoom=3, height=300)
-    fig.update_layout(
-    mapbox_style="white-bg",
-    mapbox_layers=[
-        {
-            "below": 'traces',
-            "sourcetype": "raster",
-            "sourceattribution": "United States Geological Survey",
-            "source": [
-                "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
-            ]
-        }
-      ])
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    st.plotly_chart(figure_or_data=fig, use_container_width=True)
-    st.write("There are currently" , name_avaible[selected_answer] , "bikes available at this location")
+# if selected_answer == "Virtual Station":
+#     st.write("No data here: only for drop offs")
+# else:
+#     lat1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lat"]
+#     lon1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lon"]
+#     lon.append(float(lon1.iloc[0]))
+#     lat.append(float(lat1.iloc[0]))
+#     coordinates = list(zip(lat, lon))
+#     single_point =pd.DataFrame(
+#         coordinates,
+#         columns = ['lat', 'lon']
+#         )
+fig = px.scatter_mapbox(all_points, lat="lat", lon="lon", hover_name="station_name",hover_data=["Bikes Available",'Docks Available','Classic Bikes Available', 'Electric Bikes Available'], color_discrete_sequence=["fuchsia"], zoom=3, height=300)
+fig.update_layout(mapbox_style="open-street-map")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+st.plotly_chart(figure_or_data=fig, use_container_width=True)

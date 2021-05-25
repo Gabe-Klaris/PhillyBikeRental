@@ -5,10 +5,10 @@ import pydeck as pdk
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+import plotly.express as px
 #file opening
 stuff = "https://kiosks.bicycletransit.workers.dev/phl"
 req = Request(stuff, headers={'User-Agent': 'Mozilla/5.0'})
-trip_data_2021_remove = pd.read_csv("indego-trips-2021-q1.csv")
 trip_data_2021_1 = pd.read_csv("indego-trips-2021-q1.csv")
 trip_data_2020_4 = pd.read_csv("indego-trips-2020-q4.csv")
 trip_data_2020_3 = pd.read_csv("indego-trips-2020-q3.csv")
@@ -55,10 +55,12 @@ for i in selection:
     timesStr = i.strftime("%m-%d-%Y")
     to_select.append(timesStr)
 #streamlit sidebar markdown + prompts to show data for
-st.sidebar.markdown("# Pick a location and it will show the bikes available and location and the past data for the station")
-selected_answer = st.sidebar.selectbox("# Pick a location", stations)
+st.sidebar.markdown("# Pick a location to show data for")
+selected_answer = st.sidebar.selectbox("Pick a location", stations)
+st.sidebar.markdown("# Select a date range to show trip data for")
 start_date = st.sidebar.selectbox("Pick a start date", dates["Dates"])
 end_date = st.sidebar.selectbox("Pick an end date", dates["Dates"])
+st.sidebar.markdown("# Select a future (or the current) date to take out a bike on")
 selected_date = st.sidebar.selectbox("Pick a date", to_select)
 #list and dictionary defining for map
 lat = []
@@ -67,7 +69,7 @@ longitude = []
 latitude = []
 name_avaible = {}
 better_webpage = webpage.split("\"type\":\"Feature\"},")
-#getting bikes avaiable
+#getting bikes avaiable and more!
 for i in range (145):
     single_part = better_webpage[i]
     single_part = single_part.split(",")
@@ -75,29 +77,59 @@ for i in range (145):
     for f in single_part:
         if f == "\"isAvailable\":true":
             bikes_available += 1
+    #finding name
     name_part = better_webpage[i]
     startindx = name_part.find("name")
     endindx = name_part.find(",\"coordinates\"")
     stationName = name_part[startindx:endindx]
     stationNamecon = stationName[7:-1]
-    name_avaible[stationNamecon] = bikes_available
-trip_data_2021_remove.dropna(0, inplace=True)
-#list of all stations lat + lon
-
+    #docks available
+    startindx1 = name_part.find("\"docksAvailable\"")
+    endindx1 = name_part.find("\"bikesAvailable\":")
+    docks_avalable = name_part[startindx1:endindx1]
+    docks_avalablecon = int(docks_avalable[17:-1])
+    #classic bikes
+    startindx2 = name_part.find("classicBikesAvailable")
+    endindx2 = name_part.find("\"smartBikesAvailable\":")
+    classic_bikes_avalable = name_part[startindx2:endindx2]
+    classic_bikes_avalablecon = int(classic_bikes_avalable[23:-1])
+    #electric bikes
+    startindx3 = name_part.find("electricBikesAvailable")
+    endindx3 = name_part.find("\"rewardBikesAvailable\":")
+    electric_bikes_avalable = name_part[startindx3:endindx3]
+    electric_bikes_avalablecon = int(electric_bikes_avalable[24:-1])
+    name_avaible[stationNamecon] = bikes_available, docks_avalablecon, classic_bikes_avalablecon,electric_bikes_avalablecon
+#list of all stations lat + lon and bike data
+names = []
+bikes_amount = []
+docks = []
+classic = []
+electric = []
 for i in stations[1:]:
     bruh = list(full_data[full_data["Station_Name"] == i].index)
     bruh1 = list(trip_data_2021_1.loc[trip_data_2021_1.start_station == bruh[0], "start_lat"])
     bruh2 = bruh1[0]
     latitude.append(bruh2)
+    names.append(i)
+    if i == "Broad & Passyunk" or i == "11th & Market":
+        bikes_amount.append(name_avaible[i + " "][0])
+        docks.append(name_avaible[i + " "][1])
+        classic.append(name_avaible[i + " "][2])
+        electric.append(name_avaible[i + " "][3])
+    else:
+        bikes_amount.append(name_avaible[i][0])
+        docks.append(name_avaible[i][1])
+        classic.append(name_avaible[i][2])
+        electric.append(name_avaible[i][3])
 for i in stations[1:]:
     bruh = list(full_data[full_data["Station_Name"] == i].index)
     bruh1 = list(trip_data_2021_1.loc[trip_data_2021_1.start_station == bruh[0], "start_lon"])
     bruh2 = bruh1[0]
     longitude.append(bruh2)
-stations_coords = list(zip(latitude, longitude))
+stations_coords = list(zip(latitude, longitude,names,bikes_amount,docks,classic,electric))
 all_points = pd.DataFrame(
     stations_coords,
-    columns=['lat', 'lon']
+    columns=['lat', 'lon','station_name','Bikes Available','Docks Available','Classic Bikes Available', 'Electric Bikes Available']
 )
 #for graphs
 #all the start and end times at a station
@@ -122,7 +154,7 @@ for i in dates["Dates"]:
     list_date = i.split("/")
     start_date_month = int(list_date[0])
     start_date_day = int(list_date[1])
-    if (start_date_month > start_month and start_date_month < end_month) or (start_date_month > start_month and start_date_month == end_month and start_date_day <= end_day) or (start_date_month == start_month and start_date_month < end_month and start_date_day >= start_date) or (start_date_month >= start_month and start_date_month <= end_month and start_date_day >= start_day and start_date_day <= end_day):
+    if (start_date_month > start_month and start_date_month < end_month) or (start_date_month > start_month and start_date_month == end_month and start_date_day <= end_day) or (start_date_month == start_month and start_date_month < end_month and start_date_day >= start_day) or (start_date_month >= start_month and start_date_month <= end_month and start_date_day >= start_day and start_date_day <= end_day):
         for j in start_times:
             trip_date = j.split(" ")
             trip_day = trip_date[0]
@@ -135,7 +167,7 @@ for f in dates["Dates"]:
     list_date1 = f.split("/")
     end_date_month = int(list_date1[0])
     end_date_day = int(list_date1[1])
-    if (end_date_month > start_month and end_date_month < end_month) or (end_date_month > start_month and end_date_month == end_month and end_date_day <= end_day) or (end_date_month == start_month and end_date_month < end_month and end_date_day >= start_date) or (end_date_month >= start_month and end_date_month <= end_month and end_date_day >= start_day and end_date_day <= end_day):
+    if (end_date_month > start_month and end_date_month < end_month) or (end_date_month > start_month and end_date_month == end_month and end_date_day <= end_day) or (end_date_month == start_month and end_date_month < end_month and end_date_day >= start_day) or (end_date_month >= start_month and end_date_month <= end_month and end_date_day >= start_day and end_date_day <= end_day):
         for h in end_times:
             trip_date1 = h.split(" ")
             trip_day1 = trip_date1[0]
@@ -225,50 +257,16 @@ for i in range (0,48):
 #setting up ticks
 times_ticks = []
 for i in range(0,48):
-    times_ticks.append(times[i] + "-" + times[i+1])
-#display map data + amount of bikes available
-if (selected_answer == "Virtual Station"):
-    st.write("No data here: only for drop offs")
-else:
-    lat1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lat"]
-    lon1 = full_data.loc[full_data.Station_Name == selected_answer, "start_lon"]
-    lon.append(float(lon1.iloc[0]))
-    lat.append(float(lat1.iloc[0]))
-    coordinates = list(zip(lat, lon))
-    single_point =pd.DataFrame(
-        coordinates,
-        columns = ['lat', 'lon']
-        )
-    st.pydeck_chart(pdk.Deck(
-        map_style='mapbox://styles/mapbox/light-v9',
-        initial_view_state=pdk.ViewState(
-            latitude=39.953,
-            longitude=-75.17,
-            zoom=10,
-            pinch=50,
-        ),
-        layers=[
-            pdk.Layer(
-                "ScatterplotLayer",
-                data=single_point,
-                get_position='[lon, lat]',
-                get_fill_color=[140, 200, 0],
-                get_radius=100,
-                get_line_color=[0, 0, 0],
-            ),
-            pdk.Layer(
-                "ScatterplotLayer",
-                data=all_points,
-                get_position='[lon, lat]',
-                get_fill_color=[255, 140, 0],
-                get_radius=50,
-                tooltips = {"text": "hi"},
-            ),
-        ],
-    ))
-    st.write("There are currently" , name_avaible[selected_answer] , "bikes available at this location")
+    times_ticks.append(times[i] + " - " + times[i+1])
+#display map data + amount of bikes available guau so efficent u so cool
+st.header("Map of all stations and current data from the stations")
+fig = px.scatter_mapbox(all_points, lat="lat", lon="lon", hover_name="station_name",hover_data=["Bikes Available",'Docks Available','Classic Bikes Available', 'Electric Bikes Available'], color_discrete_sequence=["fuchsia"], zoom=3, height=300)
+fig.update_layout(mapbox_style="open-street-map")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+st.plotly_chart(figure_or_data=fig, use_container_width=True)
 #checks if the range of dates is valid if not/ lists will be empty so no data
 if int_start_date <= int_end_date:
+    st.header("Trips ended and started at " + selected_answer + " between " + start_date + " and " + end_date)
     dates_list = []
     for i in range(dates[dates.Dates == start_date].index[0], dates[dates.Dates == end_date].index[0] + 1):
         dates_list.append(dates.loc[i, "Dates"])
@@ -279,14 +277,14 @@ if int_start_date <= int_end_date:
     plt.xticks(x_values, dates_list)
     ax.tick_params(axis='x', rotation=70, labelsize=3)
     plt.xlabel("Days")
-    plt.title("Trips started at the location")
+    plt.title("Trips started")
     plt.plot(average_trips_start)
     st.pyplot(fig)
     #create graph for trips ended
     fig1 = plt.figure()
     ax1 = plt.axes()
     plt.xticks(x_values, dates_list)
-    plt.title("Trips ended at the location")
+    plt.title("Trips ended")
     plt.xlabel("Days")
     ax1.tick_params(axis='x', rotation=70, labelsize=3)
     plt.plot(average_trips_end)
@@ -295,11 +293,12 @@ if int_start_date <= int_end_date:
 else:
     st.write("Select new end date//can't be before start date")
 #graphing half hour graphs
+st.header("Based on the date you want to take a bike out on, these graphs show data from each half hour on the correlating day in 2020 and 2019")
 fig = plt.figure()
 ax = plt.axes()
 x_values = np.arange(1, len(times_ticks) +1, 1)
 plt.xticks(x_values, times_ticks)
-ax.tick_params(axis='x', rotation=70, labelsize=3)
+ax.tick_params(axis='x', rotation=70, labelsize=5)
 plt.xlabel("Time")
 plt.ylabel("Net change in bikes per half hour")
 plt.title("Trips in 2020")
@@ -312,8 +311,15 @@ plt.xticks(x_values, times_ticks)
 plt.title("Trips in 2019")
 plt.xlabel("Time")
 plt.ylabel("Net change in bikes per half hour")
-ax1.tick_params(axis='x', rotation=70, labelsize=3)
+ax1.tick_params(axis='x', rotation=70, labelsize=5)
 plt.plot(halfhour_2019_netchange)
 st.pyplot(fig1)
+st.write("""The y axis (Net change in bikes per half hour) is calculated by subtracting the trips that ended
+at the station by the trips that ended at the station during the half hour peroid. This number will be
+the overall net change in bikes available at the station through the half hour. This also means that
+this number does not calculate the activity of the station as a value of \"0\" could mean that
+five trips started and ended at the station or that nobody used the station in the half hour.""")
 #finish combining all data then work seperately on the clicky stuff with link
 #change to fit with data within past two years.
+#headers and stuff
+#explain net change in bikes
