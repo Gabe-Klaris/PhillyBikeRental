@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 import plotly.express as px
+import holidays
 #file opening
 stuff = "https://kiosks.bicycletransit.workers.dev/phl"
 req = Request(stuff, headers={'User-Agent': 'Mozilla/5.0'})
@@ -22,16 +23,12 @@ station_data = pd.read_csv("indego-stations-2021-01-01.csv")
 dates = pd.read_csv("Dates.csv")
 full_data = trip_data_2021_1.set_index("start_station").join(station_data.set_index("Station_ID"))
 full_data_end = trip_data_2021_1.set_index("end_station").join(station_data.set_index("Station_ID"))
-full_data_1 = trip_data_2020_2.set_index("start_station").join(station_data.set_index("Station_ID"))
-full_data_end_1 = trip_data_2020_2.set_index("end_station").join(station_data.set_index("Station_ID"))
-full_data_2 = trip_data_2019_2.set_index("start_station").join(station_data.set_index("Station_ID"))
-full_data_end_2 = trip_data_2019_2.set_index("end_station").join(station_data.set_index("Station_ID"))
 web_byte = urlopen(req).read()
 webpage = web_byte.decode('utf-8')
 stations = list(station_data.loc[station_data.Status == "Active", "Station_Name"])
 #creating date lists
-dates_2020_Q2 = pd.date_range(start="2020/04/01", end="2020/06/30", freq="D")
-dates_2019_Q2 = pd.date_range(start="2019/04/01", end="2019/06/30",freq="D")
+dates_2020_Q2 = pd.date_range(start="2020/01/01", end="2020/12/31", freq="D")
+dates_2019_Q2 = pd.date_range(start="2019/01/01", end="2019/12/31",freq="D")
 times_before = pd.date_range(start="1/1/2020",periods=49,freq="0h30min")
 times = []
 for i in times_before:
@@ -47,9 +44,12 @@ for i in dates_2019_Q2:
     timestampStr = i.strftime("%m-%d-%Y")
     dates_list_2019.append(timestampStr.replace("-",""))
 #select a date in the next two weeks
+#holidays
+us_holidays = holidays.CountryHoliday('US', prov=None, state='PA')
 #show the half hour data from that day (day of the week) in the last two years 
 d = datetime.today()
 d_str = d.strftime("%m-%d-%Y")
+dayofweek = d.strftime("%A")
 selection = pd.date_range(start=d, periods=14,freq="D")
 for i in selection:
     timesStr = i.strftime("%m-%d-%Y")
@@ -174,21 +174,6 @@ for f in dates["Dates"]:
             if f == trip_day1:
                 trips_per_day1 += 1
         average_trips_end.append(trips_per_day1)
-#making list of all times in the same quarter withnin the 2 years
-start_times = []
-start_times1 = full_data_1.loc[full_data_1.Station_Name ==selected_answer, "start_time"]
-start_times2 = full_data_2.loc[full_data_2.Station_Name ==selected_answer, "start_time"]
-for i in start_times1:
-    start_times.append(i)
-for i in start_times2:
-    start_times.append(i)
-end_times = []
-end_times1 = full_data_end_1.loc[full_data_end_1.Station_Name ==selected_answer, "end_time"]
-end_times2 = full_data_end_2.loc[full_data_end_2.Station_Name ==selected_answer, "end_time"]
-for i in end_times1:
-    end_times.append(i)
-for i in end_times2:
-    end_times.append(i)
 #getting date for last year and year before and trips in that day
 selected_date_2020 = int(selected_date.replace("-","")) -1 
 selected_date_2019 = int(selected_date.replace("-","")) -2
@@ -204,6 +189,49 @@ date_2020_month = date_2020[0:2]
 date_2020_day = date_2020[2:4]
 date_2019_month = date_2019[0:2]
 date_2019_day = date_2019[2:4]
+date_form_2020 = date_2020_month + "/" + date_2020_day + "/" + "2020"
+date_form_2019 = date_2019_month + "/" + date_2019_day + "/" + "2019"
+quarter_2020 = int(date_2020_month + date_2020_day)
+quarter_2019 = int(date_2019_month + date_2019_day)
+if quarter_2020 >= 101 and quarter_2020 <= 331:
+    full_data_1 = trip_data_2020_1.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_1 = trip_data_2020_1.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2020 >= 401 and quarter_2020 <= 630:
+    full_data_1 = trip_data_2020_2.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_1 = trip_data_2020_2.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2020 >= 701 and quarter_2020 <= 930:
+    full_data_1 = trip_data_2020_3.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_1 = trip_data_2020_3.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2020 >= 1001 and quarter_2020 <= 1231:
+    full_data_1 = trip_data_2020_4.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_1 = trip_data_2020_4.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2019 >=101 and quarter_2019 <= 331:
+    full_data_2 = trip_data_2019_1.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_2 = trip_data_2019_1.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2019 >=401 and quarter_2019 <= 630:
+    full_data_2 = trip_data_2019_2.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_2 = trip_data_2019_2.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2019 >=701 and quarter_2019 <= 930:
+    full_data_2 = trip_data_2019_3.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_2 = trip_data_2019_3.set_index("end_station").join(station_data.set_index("Station_ID"))
+if quarter_2019 >=1001 and quarter_2019 <= 1231:
+    full_data_2 = trip_data_2019_4.set_index("start_station").join(station_data.set_index("Station_ID"))
+    full_data_end_2 = trip_data_2019_4.set_index("end_station").join(station_data.set_index("Station_ID"))
+#making list of all times in the same quarter withnin the 2 years
+start_times = []
+start_times1 = full_data_1.loc[full_data_1.Station_Name ==selected_answer, "start_time"]
+start_times2 = full_data_2.loc[full_data_2.Station_Name ==selected_answer, "start_time"]
+for i in start_times1:
+    start_times.append(i)
+for i in start_times2:
+    start_times.append(i)
+end_times = []
+end_times1 = full_data_end_1.loc[full_data_end_1.Station_Name ==selected_answer, "end_time"]
+end_times2 = full_data_end_2.loc[full_data_end_2.Station_Name ==selected_answer, "end_time"]
+for i in end_times1:
+    end_times.append(i)
+for i in end_times2:
+    end_times.append(i)
 for i in start_times:
     trips_list = i.split(" ")
     if "2020" in trips_list[0]:
@@ -270,7 +298,18 @@ if int_start_date <= int_end_date:
     dates_list = []
     for i in range(dates[dates.Dates == start_date].index[0], dates[dates.Dates == end_date].index[0] + 1):
         dates_list.append(dates.loc[i, "Dates"])
+    holidays = []
+    for i in range(0,len(dates_list)):
+        if dates_list[i] in us_holidays:
+            holidays.append(dates_list[i] + " " + us_holidays.get(dates_list[i]))
     #creating trips started graph
+        if i == "2/14/2021":
+            holidays.append(dates_list[i] + " Valentine's Day")
+        if i == "2/17/2021":
+            holidays.append(dates_list[i] + " St. Patrick's Day")
+    st.write("The holidays for this date range are:")
+    for i in holidays:
+        st.write(i)
     fig = plt.figure()
     ax = plt.axes()
     x_values = np.arange(1, 2 + dates[dates.Dates == end_date].index[0]-dates[dates.Dates == start_date].index[0], 1)
@@ -293,7 +332,7 @@ if int_start_date <= int_end_date:
 else:
     st.write("Select new end date//can't be before start date")
 #graphing half hour graphs
-st.header("Based on the date you want to take a bike out on, these graphs show data from each half hour on the correlating day in 2020 and 2019")
+st.header("Based on the date you want to take a bike out on, these graphs show data from each half hour on the same " + dayofweek + " in 2020 and 2019")
 fig = plt.figure()
 ax = plt.axes()
 x_values = np.arange(1, len(times_ticks) +1, 1)
@@ -304,6 +343,9 @@ plt.ylabel("Net change in bikes per half hour")
 plt.title("Trips in 2020")
 plt.plot(halfhour_2020_netchange)
 st.pyplot(fig)
+#display if date is holiday
+if date_form_2020 in us_holidays:
+    st.write(us_holidays.get(date_form_2020))
 #create graph for trips ended
 fig1 = plt.figure()
 ax1 = plt.axes()
@@ -314,6 +356,9 @@ plt.ylabel("Net change in bikes per half hour")
 ax1.tick_params(axis='x', rotation=70, labelsize=5)
 plt.plot(halfhour_2019_netchange)
 st.pyplot(fig1)
+#will display if date is holiday
+if date_form_2019 in us_holidays:
+    st.write(us_holidays.get(date_form_2019))
 st.write("""The y axis (Net change in bikes per half hour) is calculated by subtracting the trips that ended
 at the station by the trips that ended at the station during the half hour peroid. This number will be
 the overall net change in bikes available at the station through the half hour. This also means that
