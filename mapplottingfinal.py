@@ -20,17 +20,19 @@ trip_data_2019_2 = pd.read_csv("indego-trips-2019-q2.csv")
 trip_data_2019_3 = pd.read_csv("indego-trips-2019-q3.csv")
 trip_data_2019_4 = pd.read_csv("indego-trips-2019-q4.csv")
 station_data = pd.read_csv("indego-stations-2021-01-01.csv")
-dates = pd.read_csv("Dates.csv")
+#dates = pd.read_csv("Dates.csv")
 full_data = trip_data_2021_1.set_index("start_station").join(station_data.set_index("Station_ID"))
 full_data_end = trip_data_2021_1.set_index("end_station").join(station_data.set_index("Station_ID"))
 web_byte = urlopen(req).read()
 webpage = web_byte.decode('utf-8')
 stations = list(station_data.loc[station_data.Status == "Active", "Station_Name"])
 #creating date lists
+dates_2021_Q1 = pd.date_range(start="2021/01/01", end="2021/03/31", freq="D")
 dates_2020_Q2 = pd.date_range(start="2020/01/01", end="2020/12/31", freq="D")
 dates_2019_Q2 = pd.date_range(start="2019/01/01", end="2019/12/31",freq="D")
 times_before = pd.date_range(start="1/1/2020",periods=49,freq="0h30min")
 times = []
+dates = []
 for i in times_before:
     timeStr = i.strftime("%H:%M")
     times.append(timeStr)
@@ -43,23 +45,30 @@ for i in dates_2020_Q2:
 for i in dates_2019_Q2:
     timestampStr = i.strftime("%m-%d-%Y")
     dates_list_2019.append(timestampStr.replace("-",""))
+for i in dates_2021_Q1:
+    timestampStr = i.strftime("%m/%d/%Y")
+    dates.append(timestampStr.replace("-",""))
 #select a date in the next two weeks
 #holidays
 us_holidays = holidays.CountryHoliday('US', prov=None, state='PA')
 #show the half hour data from that day (day of the week) in the last two years 
 d = datetime.today()
 d_str = d.strftime("%m-%d-%Y")
-dayofweek = d.strftime("%A")
 selection = pd.date_range(start=d, periods=14,freq="D")
 for i in selection:
     timesStr = i.strftime("%m-%d-%Y")
     to_select.append(timesStr)
+I_dunno = datetime.strptime("01-01-2021", "%m-%d-%Y")
 #streamlit sidebar markdown + prompts to show data for
 st.sidebar.markdown("# Pick a location to show data for")
 selected_answer = st.sidebar.selectbox("Pick a location", stations)
 st.sidebar.markdown("# Select a date range to show trip data for")
-start_date = st.sidebar.selectbox("Pick a start date", dates["Dates"])
-end_date = st.sidebar.selectbox("Pick an end date", dates["Dates"])
+#start_date = st.sidebar.selectbox("Pick a start date", dates["Dates"])
+start_date1 = st.sidebar.date_input('Pick a start date', I_dunno)
+start_date = start_date1.strftime("%m/%d/%Y")
+end_date1 = st.sidebar.date_input('Pick an end date', I_dunno)
+end_date = end_date1.strftime("%m/%d/%Y")
+#end_date = st.sidebar.selectbox("Pick an end date", dates["Dates"])
 st.sidebar.markdown("# Select a future (or the current) date to take out a bike on")
 selected_date = st.sidebar.selectbox("Pick a date", to_select)
 #list and dictionary defining for map
@@ -149,31 +158,36 @@ end_day = int(list_end_date[1])
 int_start_date = int(start_date.replace("/", ""))
 int_end_date = int(end_date.replace("/", ""))
 #gets the amount of trips started in a day and appends the number to a list
-for i in dates["Dates"]:
+for i in dates:
     trips_per_day = 0
     list_date = i.split("/")
     start_date_month = int(list_date[0])
     start_date_day = int(list_date[1])
+    start_con = str(start_date_month) + "/" + str(start_date_day) + "/2021"
     if (start_date_month > start_month and start_date_month < end_month) or (start_date_month > start_month and start_date_month == end_month and start_date_day <= end_day) or (start_date_month == start_month and start_date_month < end_month and start_date_day >= start_day) or (start_date_month >= start_month and start_date_month <= end_month and start_date_day >= start_day and start_date_day <= end_day):
         for j in start_times:
             trip_date = j.split(" ")
             trip_day = trip_date[0]
-            if i == trip_day:
+            if start_con == trip_day:
                 trips_per_day += 1
         average_trips_start.append(trips_per_day)
 #gets the amount of trips ended in a day and appends the number to a list
-for f in dates["Dates"]:
+for f in dates:
     trips_per_day1 = 0
     list_date1 = f.split("/")
     end_date_month = int(list_date1[0])
     end_date_day = int(list_date1[1])
+    end_con = str(end_date_month) + "/" + str(end_date_day) + "/2021"
     if (end_date_month > start_month and end_date_month < end_month) or (end_date_month > start_month and end_date_month == end_month and end_date_day <= end_day) or (end_date_month == start_month and end_date_month < end_month and end_date_day >= start_day) or (end_date_month >= start_month and end_date_month <= end_month and end_date_day >= start_day and end_date_day <= end_day):
         for h in end_times:
             trip_date1 = h.split(" ")
             trip_day1 = trip_date1[0]
-            if f == trip_day1:
+            if end_con == trip_day1:
                 trips_per_day1 += 1
         average_trips_end.append(trips_per_day1)
+#selected day of week
+date_object = datetime.strptime(selected_date, "%m-%d-%Y")
+dayofweek = date_object.strftime("%A")
 #getting date for last year and year before and trips in that day
 selected_date_2020 = int(selected_date.replace("-","")) -1 
 selected_date_2019 = int(selected_date.replace("-","")) -2
@@ -293,26 +307,26 @@ fig.update_layout(mapbox_style="open-street-map")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 st.plotly_chart(figure_or_data=fig, use_container_width=True)
 #checks if the range of dates is valid if not/ lists will be empty so no data
-if int_start_date <= int_end_date:
+if (int_start_date <= int_end_date) and (int_end_date <= 3312021):
     st.header("Trips ended and started at " + selected_answer + " between " + start_date + " and " + end_date)
     dates_list = []
-    for i in range(dates[dates.Dates == start_date].index[0], dates[dates.Dates == end_date].index[0] + 1):
-        dates_list.append(dates.loc[i, "Dates"])
+    for i in range(dates.index(start_date), dates.index(end_date) + 1):
+        dates_list.append(dates[i])
     holidays = []
     for i in range(0,len(dates_list)):
         if dates_list[i] in us_holidays:
             holidays.append(dates_list[i] + " " + us_holidays.get(dates_list[i]))
     #creating trips started graph
-        if i == "2/14/2021":
+        if dates_list[i] == "02/14/2021":
             holidays.append(dates_list[i] + " Valentine's Day")
-        if i == "2/17/2021":
+        if dates_list[i] == "03/17/2021":
             holidays.append(dates_list[i] + " St. Patrick's Day")
     st.write("The holidays for this date range are:")
     for i in holidays:
         st.write(i)
     fig = plt.figure()
     ax = plt.axes()
-    x_values = np.arange(1, 2 + dates[dates.Dates == end_date].index[0]-dates[dates.Dates == start_date].index[0], 1)
+    x_values = np.arange(1, 2 + dates.index(end_date)-dates.index(start_date), 1)
     plt.xticks(x_values, dates_list)
     ax.tick_params(axis='x', rotation=70, labelsize=3)
     plt.xlabel("Days")
@@ -368,3 +382,5 @@ five trips started and ended at the station or that nobody used the station in t
 #change to fit with data within past two years.
 #headers and stuff
 #explain net change in bikes
+#update read me
+#Upload presentation to git
