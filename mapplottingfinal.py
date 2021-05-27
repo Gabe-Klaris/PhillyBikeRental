@@ -20,7 +20,6 @@ trip_data_2019_2 = pd.read_csv("indego-trips-2019-q2.csv")
 trip_data_2019_3 = pd.read_csv("indego-trips-2019-q3.csv")
 trip_data_2019_4 = pd.read_csv("indego-trips-2019-q4.csv")
 station_data = pd.read_csv("indego-stations-2021-01-01.csv")
-#dates = pd.read_csv("Dates.csv")
 full_data = trip_data_2021_1.set_index("start_station").join(station_data.set_index("Station_ID"))
 full_data_end = trip_data_2021_1.set_index("end_station").join(station_data.set_index("Station_ID"))
 web_byte = urlopen(req).read()
@@ -63,12 +62,10 @@ I_dunno = datetime.strptime("01-01-2021", "%m-%d-%Y")
 st.sidebar.markdown("# Pick a location to show data for")
 selected_answer = st.sidebar.selectbox("Pick a location", stations)
 st.sidebar.markdown("# Select a date range to show trip data for")
-#start_date = st.sidebar.selectbox("Pick a start date", dates["Dates"])
 start_date1 = st.sidebar.date_input('Pick a start date', I_dunno)
 start_date = start_date1.strftime("%m/%d/%Y")
 end_date1 = st.sidebar.date_input('Pick an end date', I_dunno)
 end_date = end_date1.strftime("%m/%d/%Y")
-#end_date = st.sidebar.selectbox("Pick an end date", dates["Dates"])
 st.sidebar.markdown("# Select a future (or the current) date to take out a bike on")
 selected_date = st.sidebar.selectbox("Pick a date", to_select)
 #list and dictionary defining for map
@@ -78,7 +75,7 @@ longitude = []
 latitude = []
 name_avaible = {}
 better_webpage = webpage.split("\"type\":\"Feature\"},")
-#getting bikes avaiable and more!
+#getting bikes avaiable and more from the website
 for i in range (145):
     single_part = better_webpage[i]
     single_part = single_part.split(",")
@@ -108,7 +105,7 @@ for i in range (145):
     electric_bikes_avalable = name_part[startindx3:endindx3]
     electric_bikes_avalablecon = int(electric_bikes_avalable[24:-1])
     name_avaible[stationNamecon] = bikes_available, docks_avalablecon, classic_bikes_avalablecon,electric_bikes_avalablecon
-#list of all stations lat + lon and bike data
+#list of all stations lat + lon and realtime bike data
 names = []
 bikes_amount = []
 docks = []
@@ -120,6 +117,7 @@ for i in stations[1:]:
     bruh2 = bruh1[0]
     latitude.append(bruh2)
     names.append(i)
+    #because some idiot on the website added a space after the name
     if i == "Broad & Passyunk" or i == "11th & Market":
         bikes_amount.append(name_avaible[i + " "][0])
         docks.append(name_avaible[i + " "][1])
@@ -136,6 +134,7 @@ for i in stations[1:]:
     bruh2 = bruh1[0]
     longitude.append(bruh2)
 stations_coords = list(zip(latitude, longitude,names,bikes_amount,docks,classic,electric))
+#creating dataframe
 all_points = pd.DataFrame(
     stations_coords,
     columns=['lat', 'lon','station_name','Bikes Available','Docks Available','Classic Bikes Available', 'Electric Bikes Available']
@@ -164,6 +163,7 @@ for i in dates:
     start_date_month = int(list_date[0])
     start_date_day = int(list_date[1])
     start_con = str(start_date_month) + "/" + str(start_date_day) + "/2021"
+    #yes I know this is long and I could make it shorter, but it works so :/
     if (start_date_month > start_month and start_date_month < end_month) or (start_date_month > start_month and start_date_month == end_month and start_date_day <= end_day) or (start_date_month == start_month and start_date_month < end_month and start_date_day >= start_day) or (start_date_month >= start_month and start_date_month <= end_month and start_date_day >= start_day and start_date_day <= end_day):
         for j in start_times:
             trip_date = j.split(" ")
@@ -178,6 +178,7 @@ for f in dates:
     end_date_month = int(list_date1[0])
     end_date_day = int(list_date1[1])
     end_con = str(end_date_month) + "/" + str(end_date_day) + "/2021"
+    #yes I know this is long and I could make it shorter, but it works so :/
     if (end_date_month > start_month and end_date_month < end_month) or (end_date_month > start_month and end_date_month == end_month and end_date_day <= end_day) or (end_date_month == start_month and end_date_month < end_month and end_date_day >= start_day) or (end_date_month >= start_month and end_date_month <= end_month and end_date_day >= start_day and end_date_day <= end_day):
         for h in end_times:
             trip_date1 = h.split(" ")
@@ -188,25 +189,30 @@ for f in dates:
 #selected day of week
 date_object = datetime.strptime(selected_date, "%m-%d-%Y")
 dayofweek = date_object.strftime("%A")
-#getting date for last year and year before and trips in that day
+#getting date for last year and year before and getting useful parts of that date
 selected_date_2020 = int(selected_date.replace("-","")) -1 
 selected_date_2019 = int(selected_date.replace("-","")) -2
 selected_date_2019= "0" + str(selected_date_2019)
 selected_date_2020= "0" + str(selected_date_2020)
 date_2019 = dates_list_2019[dates_list_2019.index(selected_date_2019)+3]
 date_2020 = dates_list_2020[dates_list_2020.index(selected_date_2020)+1]
+#creating lists
 day_trip_start_2020 = []
 day_trip_start_2019 = []
 day_trip_end_2020 = []
 day_trip_end_2019 = []
+#for sorting trips
 date_2020_month = date_2020[0:2]
 date_2020_day = date_2020[2:4]
 date_2019_month = date_2019[0:2]
 date_2019_day = date_2019[2:4]
+#used for holidays
 date_form_2020 = date_2020_month + "/" + date_2020_day + "/" + "2020"
 date_form_2019 = date_2019_month + "/" + date_2019_day + "/" + "2019"
+#used for determining quarter
 quarter_2020 = int(date_2020_month + date_2020_day)
 quarter_2019 = int(date_2019_month + date_2019_day)
+#determining quarter of wanted date in 2020, 2019 so it can get the correct dataset
 if quarter_2020 >= 101 and quarter_2020 <= 331:
     full_data_1 = trip_data_2020_1.set_index("start_station").join(station_data.set_index("Station_ID"))
     full_data_end_1 = trip_data_2020_1.set_index("end_station").join(station_data.set_index("Station_ID"))
@@ -246,6 +252,8 @@ for i in end_times1:
     end_times.append(i)
 for i in end_times2:
     end_times.append(i)
+#all start trips at the station are in start_times and end trips in end_times
+#narrowing down trips to only trips on the wanted day in 2020, 2019
 for i in start_times:
     trips_list = i.split(" ")
     if "2020" in trips_list[0]:
@@ -266,7 +274,7 @@ for i in end_times:
         parts_list1 = trips_list[0].split("-")
         if (int(parts_list1[1]) == int(date_2019_month)) and (int(parts_list1[2]) == int(date_2019_day)):
             day_trip_end_2019.append(trips_list[1])
-#getting average
+#getting ttrips ended andstarted in 2020 and 2019
 halfhour_2020_netchange = [0]
 halfhour_2019_netchange = [0]
 for i in range (0,48):
@@ -276,24 +284,29 @@ for i in range (0,48):
     trip_2019_start_counter = 0
     trip_2020_end_counter = 0
     trip_2019_end_counter = 0
+    #started/2020
     for i in day_trip_start_2020:
         trip_time = int(i.replace(":", ""))
         if (trip_time >= start_time) and (trip_time <= end_time):
             trip_2020_start_counter += 1
+    #started/2019
     for i in day_trip_start_2019:
         trip_2019_list = i.split(":")
         trip_time = int(trip_2019_list[0] + trip_2019_list[1])
         if (trip_time >= start_time) and (trip_time <= end_time):
             trip_2019_start_counter += 1
+    #ended/2020
     for i in day_trip_end_2020:
         trip_time = int(i.replace(":", ""))
         if (trip_time >= start_time) and (trip_time <= end_time):
             trip_2020_end_counter += 1
+    #ended/2019
     for i in day_trip_end_2019:
         trip_2019_list = i.split(":")
         trip_time = int(trip_2019_list[0] + trip_2019_list[1])
         if (trip_time >= start_time) and (trip_time <= end_time):
             trip_2019_end_counter += 1
+    #adding net change to lists
     halfhour_2020_netchange.append(trip_2020_end_counter- trip_2020_start_counter)
     halfhour_2019_netchange.append(trip_2019_end_counter- trip_2019_start_counter)
 #setting up ticks
@@ -378,9 +391,3 @@ at the station by the trips that ended at the station during the half hour peroi
 the overall net change in bikes available at the station through the half hour. This also means that
 this number does not calculate the activity of the station as a value of \"0\" could mean that
 five trips started and ended at the station or that nobody used the station in the half hour.""")
-#finish combining all data then work seperately on the clicky stuff with link
-#change to fit with data within past two years.
-#headers and stuff
-#explain net change in bikes
-#update read me
-#Upload presentation to git
