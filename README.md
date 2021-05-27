@@ -1,3 +1,13 @@
 "# PhillyBikeRental" 
-Gabe Junior Project python programs
-:)
+Git Repo for Gabe junior project 2021:
+Main program is Mapplottingfinal.py, all other files are parts of the main program and testing files.
+Requires packages streamlit, urllib, pandas, pydeck, matplotlib, numpy, datetime, plotly and holidays.
+The project uses streamlit for display, to run the program using streamlit use "streamlit run *filename*" in terminal.
+The program pulls data from indego bike stations, the used CSV files are found in the repo, and all of the files can be found here: https://www.rideindego.com/about/data/
+The program also pulls data from this website: https://kiosks.bicycletransit.workers.dev/phl
+
+As a side note, after each quarter indego will publish a new dataset with the quarter data once the data comes out, however the program will continue to show from the first quarter.
+Also after the year ends, the algorithm for getting the past date in 2020 and 2019 will become outdated
+but it shouldn't crash (I think).
+*I will not be updating the code.*
+ 
