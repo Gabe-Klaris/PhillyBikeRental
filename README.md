@@ -9,5 +9,6 @@ The program also pulls data from this website: https://kiosks.bicycletransit.wor
 As a side note, after each quarter indego will publish a new dataset with the quarter data once the data comes out, however the program will continue to show from the first quarter.
 Also after the year ends, the algorithm for getting the past date in 2020 and 2019 will become outdated
 but it shouldn't crash (I think).
+Update: The program crashes because the website used does not include one of the stations listed. Yes, it's stupid, no I don't feel like fixing it. 
 *I will not be updating the code.*
  
