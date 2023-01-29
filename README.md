@@ -10,5 +10,9 @@ As a side note, after each quarter indego will publish a new dataset with the qu
 Also after the year ends, the algorithm for getting the past date in 2020 and 2019 will become outdated
 but it shouldn't crash (I think).
 Update: The program crashes because the website used does not include one of the stations listed. Yes, it's stupid, no I don't feel like fixing it. 
-**I will not be updating the code.**
+**I will not be updating the code.**<br />
+
+Hey guys so funny story, I updated the code!<br />
+It is now in a new repository at https://github.com/Tubby101/Mapplotting. <br />
+The new repository has the same function and is the same thing.
  
